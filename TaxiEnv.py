@@ -120,7 +120,7 @@ class TaxiEnv(object):
     def apply_operator(self, taxi_index: int, operator: str):
         self.num_steps -= 1
         taxi = self.taxis[taxi_index]
-        assert operator in self.get_legal_operators(taxi_index)
+        assert operator in self.get_legal_operators(taxi_index) #maybe we can print somthing here
         assert not self.num_steps < 0
         if operator == 'park':
             pass
