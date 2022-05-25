@@ -32,17 +32,15 @@ class AgentGreedyImproved(AgentGreedy):
     def heuristic_improved(self, env: TaxiEnv, taxi_id: int):
         taxi = env.get_taxi(taxi_id)
         if taxi.passenger is not None:
-            print("im here")
-            distance = manhattan_distance(taxi.position, taxi.passenger.destination)
-            distance_reward = (6 - distance)
-            fuel_reward = taxi.fuel - distance
+            distance = manhattan_distance(taxi.position, taxi.passenger.destination) - 6
         else:
             distance = self.min_distance_from_passenger(env, taxi.position)
-            distance_reward = 6 - distance
-            fuel_reward = taxi.fuel - distance
-        gas_station_reward = (6 - self.min_distance_from_gas(env, taxi.position))/2
-        money_reward = 2*self.heuristic(env, taxi_id)
-        return distance_reward + fuel_reward + gas_station_reward + money_reward
+        distance_reward =  -distance
+        fuel_reward = taxi.fuel - distance
+        gas_station_reward = self.min_distance_from_gas(env, taxi.position)/2
+        money_reward = 10*self.heuristic(env, taxi_id)
+        value = distance_reward + fuel_reward + gas_station_reward + money_reward
+        return value
 
 
 class AgentMinimax(Agent):
