@@ -34,7 +34,7 @@ def cash_differece(env: TaxiEnv, taxi_id: int):
     other_taxi = env.get_taxi((taxi_id + 1) % 2)
     return taxi.cash - other_taxi.cash
 
-#TODO: should it be static or something else? if static need to remove self
+#TODO: should add extreme vale when env.done
 def heuristic_improved( env: TaxiEnv, taxi_id: int):
     taxi = env.get_taxi(taxi_id)
     if taxi.passenger is not None:
