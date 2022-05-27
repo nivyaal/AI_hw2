@@ -4,6 +4,7 @@ import TaxiEnv
 from Agent import Agent, AgentGreedy
 from TaxiEnv import TaxiEnv, manhattan_distance
 import random
+import numpy as np
 
 
 class AgentGreedyImproved(AgentGreedy):
@@ -36,6 +37,13 @@ def cash_differece(env: TaxiEnv, taxi_id: int):
 
 #TODO: should add extreme vale when env.done
 def heuristic_improved( env: TaxiEnv, taxi_id: int):
+    if env.done():
+        if cash_differece(env, taxi_id) > 0:
+            return np.inf
+        elif cash_differece(env, taxi_id) == 0:
+            return 0
+        else:
+            return -np.inf
     taxi = env.get_taxi(taxi_id)
     if taxi.passenger is not None:
         distance = manhattan_distance(taxi.position, taxi.passenger.destination) - 6
@@ -54,12 +62,12 @@ def heuristic_improved( env: TaxiEnv, taxi_id: int):
 class AgentMinimax(Agent):
     # TODO: section b : 1
     def run_step(self, env: TaxiEnv, agent_id, time_limit):
-        start = time.time()
+        start_time = time.time()
         time_for_run_step_calc = time_limit*0.8
         operators = env.get_legal_operators(agent_id)
         last_run_op = random.choice(operators)
         depth = 0
-        while time.time() - start  < time_for_run_step_calc or depth > env.num_steps:
+        while time.time() - start_time  < time_for_run_step_calc or depth > env.num_steps:
             #TODO: this can still run for a long time if the fuel is over maybe need to change?
             operators = env.get_legal_operators(agent_id)
             children = [env.clone() for _ in operators]
@@ -75,9 +83,9 @@ class AgentMinimax(Agent):
 
 
 
-    def RB_minimax(self, env: TaxiEnv, agent_id, depth: int):
+    def RB_minimax(self, env: TaxiEnv, agent_id, depth: int): #we can add the op?
         if env.done():
-            return env.get_balances()[agent_id]
+            return env.get_balances() #we will probobly want to use the difference
         if depth == 0:
             return heuristic_improved(env, agent_id)
 
