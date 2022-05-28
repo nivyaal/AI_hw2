@@ -1,4 +1,4 @@
-from datetime import time
+import time
 
 import TaxiEnv
 from Agent import Agent, AgentGreedy
@@ -10,10 +10,7 @@ import numpy as np
 class AgentGreedyImproved(AgentGreedy):
     # TODO: section a : 3
     def run_step(self, env: TaxiEnv, agent_id, time_limit):
-        operators = env.get_legal_operators(agent_id)
-        children = [env.clone() for _ in operators]
-        for child, op in zip(children, operators):
-            child.apply_operator(agent_id, op)
+        children, operators = get_children_and_operators(env, agent_id)
         children_heuristics = [heuristic_improved(child, agent_id) for child in children]
         max_heuristic = max(children_heuristics)
         index_selected = children_heuristics.index(max_heuristic)
@@ -57,44 +54,137 @@ def heuristic_improved( env: TaxiEnv, taxi_id: int):
     return env_huristic_value
 
 
-
+def get_children_and_operators(env: TaxiEnv, agent_id):
+    operators = env.get_legal_operators(agent_id)
+    children = [env.clone() for _ in operators]
+    for child, op in zip(children, operators):
+        child.apply_operator(agent_id, op)
+    return children, operators
 
 class AgentMinimax(Agent):
     # TODO: section b : 1
+    time_limit = 1
+    start_time = 0
+
     def run_step(self, env: TaxiEnv, agent_id, time_limit):
-        start_time = time.time()
-        time_for_run_step_calc = time_limit*0.8
+        self.time_limit = time_limit
+        self.start_time = time.time()
         operators = env.get_legal_operators(agent_id)
         last_run_op = random.choice(operators)
-        depth = 0
-        while time.time() - start_time  < time_for_run_step_calc or depth > env.num_steps:
+        depth = 1
+        while (depth <= env.num_steps):
             #TODO: this can still run for a long time if the fuel is over maybe need to change?
-            operators = env.get_legal_operators(agent_id)
-            children = [env.clone() for _ in operators]
-            for child, op in zip(children, operators):
-                child.apply_operator(agent_id, op)
-            children_heuristics = [self.RB_minimax(child, (agent_id+1)%2, depth) for child in children]
+            children, operators = get_children_and_operators(env, agent_id)
+            children_heuristics = []
+            out_of_time = False
+            for child in children:
+                child_heuristic = self.RB_minimax(child, agent_id, agent_id, depth-1, depth-1)
+                if child_heuristic is None:
+                    out_of_time = True
+                    break
+                children_heuristics.append(child_heuristic)
+            if out_of_time:
+                break
             max_heuristic = max(children_heuristics)
             index_selected = children_heuristics.index(max_heuristic)
-            last_run_op =  operators[index_selected]
+            last_run_op = operators[index_selected]
             depth += 1
+            #print("depth: " + str(depth) + " val:" + str(max_heuristic))
+            #print("total time: " +  str((time.time() - start_time)))
+        #print ("max: " +str(max_heuristic))
         return last_run_op
 
 
 
 
-    def RB_minimax(self, env: TaxiEnv, agent_id, depth: int): #we can add the op?
-        if env.done():
-            return env.get_balances() #we will probobly want to use the difference
-        if depth == 0:
+    def RB_minimax(self, env: TaxiEnv,  turn: int, agent_id: int, depth: int, original_depth: int):
+        if (time.time() - self.start_time) > (self.time_limit - 0.01 * original_depth):
+            return None
+        if depth == 0 or env.done() :
             return heuristic_improved(env, agent_id)
+        turn = (turn+1)%2
+        children, _ = get_children_and_operators(env, turn)
+        if turn == agent_id:
+            curr_max = -np.inf
+            for child in children:
+                child_minimax = self.RB_minimax(child, turn, agent_id, depth-1, original_depth)
+                if child_minimax is None:
+                    return None
+                curr_max = max(curr_max, child_minimax)
+            return curr_max
+        else:
+            curr_min = np.inf
+            for child in children:
+                child_minimax = self.RB_minimax(child, turn, agent_id, depth-1, original_depth)
+                if child_minimax is None:
+                    return None
+                curr_min = min(curr_min,child_minimax )
+            return curr_min
 
 
 class AgentAlphaBeta(Agent):
+    time_limit = 1
+    start_time = 0
     # TODO: section c : 1
     def run_step(self, env: TaxiEnv, agent_id, time_limit):
-        raise NotImplementedError()
+        self.time_limit = time_limit
+        self.start_time = time.time()
+        operators = env.get_legal_operators(agent_id)
+        last_run_op = random.choice(operators)
+        depth = 1
+        while (depth <= env.num_steps):
+            # TODO: this can still run for a long time if the fuel is over maybe need to change?
+            children, operators = get_children_and_operators(env, agent_id)
+            children_heuristics = []
+            out_of_time = False
+            alpha = -np.inf
+            for child in children:
+                child_heuristic = self.alpha_beta_minimax(child, agent_id, agent_id, depth - 1, depth - 1, alpha, np.inf)
+                if child_heuristic is None:
+                    out_of_time = True
+                    break
+                alpha = max(alpha, child_heuristic)
+                children_heuristics.append(child_heuristic)
+            if out_of_time:
+                break
+            max_heuristic = max(children_heuristics)
+            index_selected = children_heuristics.index(max_heuristic)
+            last_run_op = operators[index_selected]
+            depth += 1
+            #print("depth: " + str(depth) + " val:" + str(max_heuristic))
+            #print("total time: " +  str((time.time() - self.start_time)))
+            # print ("max: " +str(max_heuristic))
+        return last_run_op
 
+    def alpha_beta_minimax(self, env: TaxiEnv,  turn: int, agent_id: int, depth: int, original_depth: int, alpha: int, beta: int):
+        if (time.time() - self.start_time) > (self.time_limit - 0.01 * original_depth):
+            return None
+        if depth == 0 or env.done():
+            return heuristic_improved(env, agent_id)
+        turn = (turn + 1) % 2
+        children, _ = get_children_and_operators(env, turn)
+        if turn == agent_id:
+            curr_max = -np.inf
+            for child in children:
+                child_minimax = self.alpha_beta_minimax(child, turn, agent_id, depth - 1, original_depth, alpha, beta)
+                if child_minimax is None:
+                    return None
+                curr_max = max(curr_max, child_minimax)
+                alpha = max(curr_max, alpha)
+                if(curr_max >= beta):
+                    return np.inf
+            return curr_max
+        else:
+            curr_min = np.inf
+            for child in children:
+                child_minimax = self.alpha_beta_minimax(child, turn, agent_id, depth - 1, original_depth, alpha, beta)
+                if child_minimax is None:
+                    return None
+                curr_min = min(curr_min, child_minimax)
+                beta = min(curr_min, beta)
+                if (curr_min <= alpha):
+                    return -np.inf
+            return curr_min
 
 class AgentExpectimax(Agent):
     # TODO: section d : 1

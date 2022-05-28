@@ -1,5 +1,6 @@
 import random
 import time
+import numpy as np
 
 from TaxiEnv import TaxiEnv
 import argparse
@@ -63,5 +64,69 @@ def run_agents():
         print('taxi', balances.index(max(balances)), 'wins!')
 
 
+def test(seed, count_steps ,agent_names):
+    agents = {
+        "random": Agent.AgentRandom(),
+        "greedy": Agent.AgentGreedy(),
+        "greedy_improved": submission.AgentGreedyImproved(),
+        "minimax": submission.AgentMinimax(),
+        "alphabeta": submission.AgentAlphaBeta(),
+        "expectimax": submission.AgentExpectimax()
+    }
+    print_game = False
+    time_limit = 10
+
+    env = TaxiEnv()
+    env.generate(seed, 2*count_steps)
+    if print_game:
+        print('initial board:')
+        env.print()
+
+    for _ in range(count_steps):
+        for i, agent_name in enumerate(agent_names):
+            agent = agents[agent_name]
+            start = time.time()
+            op = agent.run_step(env, i,time_limit)
+            end = time.time()
+            time_took = end - start
+            print("unused time: " + str(time_limit - time_took))
+
+            if end - start > time_limit:
+                raise RuntimeError("Agent used too much time!")
+            env.apply_operator(i, op)
+            if print_game:
+                print('taxi ' + str(i) + ' chose ' + op)
+                env.print()
+        if env.done():
+            break
+    balances = env.get_balances()
+    print(balances)
+    if balances[0] == balances[1]:
+        return 2
+    else:
+        return balances.index(max(balances))
+    #else:
+    #    print('taxi', balances.index(max(balances)), 'wins!')
+
+def test_of_tests():
+    results = [0, 0, 0]
+    agent_names = [ "minimax", "alphabeta"]
+    for i in range(10):
+        results[test(i, 8, agent_names)] += 1
+    print("taxi 0 wins: " + str(results[0]))
+    print("taxi 1 wins: " + str(results[1]))
+    print("draws: " + str(results[2]))
+
+    results = [0, 0, 0]
+    agent_names = ["minimax", "greedy_improved" ]
+    for i in range(10):
+        results[test(i, 8, agent_names)] += 1
+    print("taxi 0 wins: " + str(results[0]))
+    print("taxi 1 wins: " + str(results[1]))
+    print("draws: " + str(results[2]))
+
+
 if __name__ == "__main__":
+    #test_of_tests()
     run_agents()
+
