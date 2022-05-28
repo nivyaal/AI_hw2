@@ -110,7 +110,7 @@ def test(seed, count_steps ,agent_names):
 
 def test_of_tests():
     results = [0, 0, 0]
-    agent_names = [ "minimax", "alphabeta"]
+    agent_names = [ "expectimax", "alphabeta"]
     for i in range(10):
         results[test(i, 8, agent_names)] += 1
     print("taxi 0 wins: " + str(results[0]))
@@ -118,7 +118,7 @@ def test_of_tests():
     print("draws: " + str(results[2]))
 
     results = [0, 0, 0]
-    agent_names = ["minimax", "greedy_improved" ]
+    agent_names = ["expectimax", "greedy_improved" ]
     for i in range(10):
         results[test(i, 8, agent_names)] += 1
     print("taxi 0 wins: " + str(results[0]))
@@ -127,6 +127,6 @@ def test_of_tests():
 
 
 if __name__ == "__main__":
-    #test_of_tests()
-    run_agents()
+    test_of_tests()
+    #run_agents()
 
