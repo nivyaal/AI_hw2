@@ -6,6 +6,7 @@ from TaxiEnv import TaxiEnv
 import argparse
 import submission
 import Agent
+import itertools
 
 
 def run_agents():
@@ -89,7 +90,7 @@ def test(seed, count_steps ,agent_names):
             op = agent.run_step(env, i,time_limit)
             end = time.time()
             time_took = end - start
-            print("unused time: " + str(time_limit - time_took))
+            #print("unused time: " + str(time_limit - time_took))
 
             if end - start > time_limit:
                 raise RuntimeError("Agent used too much time!")
@@ -110,20 +111,45 @@ def test(seed, count_steps ,agent_names):
 
 def test_of_tests():
     results = [0, 0, 0]
-    agent_names = [ "expectimax", "alphabeta"]
-    for i in range(10):
-        results[test(i, 8, agent_names)] += 1
-    print("taxi 0 wins: " + str(results[0]))
-    print("taxi 1 wins: " + str(results[1]))
-    print("draws: " + str(results[2]))
+    agent_names = [ "random", "greedy","greedy_improved","minimax", "alphabeta" ,"expectimax"]
+    agents_wins = {
+        "random": 0,
+        "greedy": 0,
+        "greedy_improved": 0,
+        "minimax": 0,
+        "alphabeta": 0,
+        "expectimax": 0
+    }
+    draws_cnt = 0
+    num_of_steps = 10
+    for i in range(256):
+        for agents_playing in itertools.product(agent_names, repeat = 2 ):
+            if agents_playing[0] == agents_playing[1] or ("random" in agents_playing and "greedy" in agents_playing):
+                continue
+            print(agents_playing)
+            #agents_playing = [agent1, agent2]
+            result = test(i, num_of_steps, agents_playing)
+            winner = "draw"
+            if result < 2:
+                agents_wins[agents_playing[result]] += 1
+                winner = str(agents_playing[result])
+            else:
+                draws_cnt+=1
+            print("seed: " + str(i) + ", players: " + str(agents_playing)+ ", winner: " + winner + ", draws: " + str(draws_cnt))
+            print (agents_wins)
 
-    results = [0, 0, 0]
-    agent_names = ["expectimax", "greedy_improved" ]
-    for i in range(10):
-        results[test(i, 8, agent_names)] += 1
-    print("taxi 0 wins: " + str(results[0]))
-    print("taxi 1 wins: " + str(results[1]))
-    print("draws: " + str(results[2]))
+        #results[test(i, 10, agent_names)] += 1
+
+
+    #results = [0, 0, 0]
+    #agent_names = ["expectimax", "greedy_improved" ]
+    #for i in range(10):
+    #    results[test(i, 8, agent_names)] += 1
+    #print("taxi 0 wins: " + str(results[0]))
+    #print("taxi 1 wins: " + str(results[1]))
+    #print("draws: " + str(results[2]))
+
+
 
 
 if __name__ == "__main__":
