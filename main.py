@@ -153,6 +153,6 @@ def test_of_tests():
 
 
 if __name__ == "__main__":
-    test_of_tests()
-    #run_agents()
+    #test_of_tests()
+    run_agents()
 

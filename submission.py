@@ -8,7 +8,6 @@ import numpy as np
 
 
 class AgentGreedyImproved(AgentGreedy):
-    # TODO: section a : 3
     def run_step(self, env: TaxiEnv, agent_id, time_limit):
         children, operators = get_children_and_operators(env, agent_id)
         children_heuristics = [heuristic_improved(child, agent_id) for child in children]
@@ -35,7 +34,6 @@ def cash_differece(env: TaxiEnv, taxi_id: int):
     return taxi.cash - other_taxi.cash
 
 
-# TODO: should add extreme vale when env.done
 def heuristic_improved(env: TaxiEnv, taxi_id: int):
     if env.done():
         if cash_differece(env, taxi_id) > 0:
@@ -66,7 +64,6 @@ def get_children_and_operators(env: TaxiEnv, agent_id):
 
 
 class AgentMinimax(Agent):
-    # TODO: section b : 1
     time_limit = 1
     start_time = 0
 
@@ -77,7 +74,6 @@ class AgentMinimax(Agent):
         last_run_op = random.choice(operators)
         depth = 1
         while (depth <= env.num_steps):
-            # TODO: this can still run for a long time if the fuel is over maybe need to change?
             children, operators = get_children_and_operators(env, agent_id)
             children_heuristics = []
             out_of_time = False
@@ -124,7 +120,6 @@ class AgentAlphaBeta(Agent):
     time_limit = 1
     start_time = 0
 
-    # TODO: section c : 1
     def run_step(self, env: TaxiEnv, agent_id, time_limit):
         self.time_limit = time_limit
         self.start_time = time.time()
@@ -185,7 +180,6 @@ class AgentAlphaBeta(Agent):
 
 
 class AgentExpectimax(Agent):
-    # TODO: section d : 1
     time_limit = 1
     start_time = 0
 
